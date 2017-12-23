@@ -42,6 +42,7 @@ enum IfToken {
   case infix(name: String, bindingPower: Int, op: InfixOperator.Type)
   case prefix(name: String, bindingPower: Int, op: PrefixOperator.Type)
   case variable(Resolvable)
+  case `static`(Bool)
   case end
 
   var bindingPower: Int {
@@ -50,7 +51,7 @@ enum IfToken {
       return bindingPower
     case .prefix(_, let bindingPower, _):
       return bindingPower
-    case .variable(_):
+    case .variable(_), .static(_):
       return 0
     case .end:
         return 0
@@ -66,6 +67,8 @@ enum IfToken {
       return op.init(expression: expression)
     case .variable(let variable):
       return VariableExpression(variable: variable)
+    case .static(let value):
+      return StaticExpression(value: value)
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -80,6 +83,8 @@ enum IfToken {
       throw TemplateSyntaxError("'if' expression error: prefix operator '\(name)' was called with a left hand side")
     case .variable(let variable):
       throw TemplateSyntaxError("'if' expression error: variable '\(variable)' was called with a left hand side")
+    case .static:
+      throw TemplateSyntaxError("'if' expression error: static expression was called with a left hand side")
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -110,8 +115,11 @@ final class IfExpressionParser {
           return .prefix(name: name, bindingPower: bindingPower, op: cls)
         }
       }
-
-      return .variable(try tokenParser.compileFilter(component))
+      if let bool = Bool(component) {
+        return .static(bool)
+      } else {
+        return .variable(try tokenParser.compileFilter(component))
+      }
     }
   }
 
