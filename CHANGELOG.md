@@ -5,6 +5,7 @@
 ### Enhancements
 
 - Added support for resolving superclass properties for not-NSObject subclasses
+- Now you can iterate arrays using their indexes and values, not just values 
 
 ### Bug Fixes
 
