@@ -38,10 +38,11 @@ func findOperator(name: String) -> Operator? {
 }
 
 
-enum IfToken {
+indirect enum IfToken {
   case infix(name: String, bindingPower: Int, op: InfixOperator.Type)
   case prefix(name: String, bindingPower: Int, op: PrefixOperator.Type)
   case variable(Resolvable)
+  case subExpression(IfExpressionParser)
   case end
 
   var bindingPower: Int {
@@ -51,6 +52,8 @@ enum IfToken {
     case .prefix(_, let bindingPower, _):
       return bindingPower
     case .variable(_):
+      return 0
+    case .subExpression(_):
       return 0
     case .end:
         return 0
@@ -66,6 +69,8 @@ enum IfToken {
       return op.init(expression: expression)
     case .variable(let variable):
       return VariableExpression(variable: variable)
+    case .subExpression(let parser):
+      return try parser.expression()
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -80,6 +85,8 @@ enum IfToken {
       throw TemplateSyntaxError("'if' expression error: prefix operator '\(name)' was called with a left hand side")
     case .variable(let variable):
       throw TemplateSyntaxError("'if' expression error: variable '\(variable)' was called with a left hand side")
+    case .subExpression(_):
+      throw TemplateSyntaxError("'if' expression error: sub expression was called with a left hand side")
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -101,17 +108,59 @@ final class IfExpressionParser {
   var position: Int = 0
 
   init(components: [String], tokenParser: TokenParser) throws {
-    self.tokens = try components.map { component in
-      if let op = findOperator(name: component) {
-        switch op {
-        case .infix(let name, let bindingPower, let cls):
-          return .infix(name: name, bindingPower: bindingPower, op: cls)
-        case .prefix(let name, let bindingPower, let cls):
-          return .prefix(name: name, bindingPower: bindingPower, op: cls)
-        }
-      }
+    guard try components.reduce(0, {
+      var balance = $0
+      if $1 == "(" { balance += 1 }
+      else if $1 == ")" { balance -= 1 }
+      if balance < 0 { throw TemplateSyntaxError("unbalanced brackets") }
+      return balance
+    }) == 0 else {
+      throw TemplateSyntaxError("unbalanced brackets")
+    }
+    
+    var parsedComponents = [String]()
 
-      return .variable(try tokenParser.compileFilter(component))
+    func parseSubExpression(from index: Int, components: [String], tokenParser: TokenParser) throws -> (IfExpressionParser, [String]) {
+      var bracketsBalance = 1
+      let subComponents = Array(components
+        .suffix(from: index)
+        .prefix(while: {
+          if $0 == "(" { bracketsBalance += 1 }
+          else if $0 == ")" { bracketsBalance -= 1 }
+          return bracketsBalance != 0
+        }))
+      
+      let expression = try IfExpressionParser(components: subComponents, tokenParser: tokenParser)
+      return (expression, ["("] + subComponents + [")"])
+    }
+    
+    self.tokens = try components.enumerated().flatMap { index, component in
+      if component == "(" {
+        let (expression, parsed) = try parseSubExpression(
+          from: index + 1,
+          components: components,
+          tokenParser: tokenParser
+        )
+        parsedComponents.append(contentsOf: parsed)
+        return .subExpression(expression)
+      }
+      else if component == ")" {
+        parsedComponents.append(component)
+        return nil
+      } else if index >= parsedComponents.count {
+        parsedComponents.append(component)
+        if let op = findOperator(name: component) {
+          switch op {
+          case .infix(let name, let bindingPower, let cls):
+            return .infix(name: name, bindingPower: bindingPower, op: cls)
+          case .prefix(let name, let bindingPower, let cls):
+            return .prefix(name: name, bindingPower: bindingPower, op: cls)
+          }
+        }
+        return .variable(try tokenParser.compileFilter(component))
+      } else {
+        return nil
+      }
     }
   }
 

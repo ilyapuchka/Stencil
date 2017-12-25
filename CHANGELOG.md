@@ -5,6 +5,7 @@
 ### Enhancements
 
 - Added support for resolving superclass properties for not-NSObject subclasses
+- You can now use brackets in boolean expressions to change operators precedence
 
 ### Bug Fixes
 
