@@ -5,6 +5,7 @@
 ### Enhancements
 
 - Added support for resolving superclass properties for not-NSObject subclasses
+- Drastic improvements in error reporting
 
 ### Bug Fixes
 
