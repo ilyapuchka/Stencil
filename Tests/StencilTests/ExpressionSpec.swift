@@ -11,7 +11,10 @@ func testExpressions() {
 
       $0.it("can resolve variable") {
         let context = Context(dictionary: ["value": "known"])
-        try expect(try expression.resolve(context) as? String) == "known"
+        try expect(expression.resolve(context) as? String) == "known"
+        
+        try expect(Template(templateString: "{{ value == \"known\" }}").render(["value": "known"])) == "true"
+        try expect(Template(templateString: "{{ value == \"known\" }}").render(["value": "unknown"])) == "false"
       }
 
       $0.it("evaluates to true when value is not nil") {
