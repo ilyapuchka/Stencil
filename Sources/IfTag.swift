@@ -42,7 +42,7 @@ indirect enum IfToken {
   case infix(name: String, bindingPower: Int, op: InfixOperator.Type)
   case prefix(name: String, bindingPower: Int, op: PrefixOperator.Type)
   case variable(Resolvable)
-  case subExpression(IfExpressionParser)
+  case subExpression(Expression)
   case end
 
   var bindingPower: Int {
@@ -69,8 +69,8 @@ indirect enum IfToken {
       return op.init(expression: expression)
     case .variable(let variable):
       return VariableExpression(variable: variable)
-    case .subExpression(let parser):
-      return try parser.expression()
+    case .subExpression(let expression):
+      return expression
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -107,36 +107,32 @@ final class IfExpressionParser {
   let tokens: [IfToken]
   var position: Int = 0
 
-  init(components: [String], tokenParser: TokenParser) throws {
+  private init(tokens: [IfToken]) {
+    self.tokens = tokens
+  }
+  
+  static func parser(components: [String], tokenParser: TokenParser) throws -> IfExpressionParser {
+    try IfExpressionParser.validateBracketsBalance(components: components)
+    return try IfExpressionParser(components: components, tokenParser: tokenParser)
+  }
+
+  static func validateBracketsBalance(components: [String]) throws {
     guard try components.reduce(0, {
-      var balance = $0
-      if $1 == "(" { balance += 1 }
-      else if $1 == ")" { balance -= 1 }
-      if balance < 0 { throw TemplateSyntaxError("unbalanced brackets") }
-      return balance
+      var bracketsBalance = $0
+      if $1 == "(" { bracketsBalance += 1 }
+      else if $1 == ")" { bracketsBalance -= 1 }
+      if bracketsBalance < 0 { throw TemplateSyntaxError("unbalanced brackets") }
+      return bracketsBalance
     }) == 0 else {
       throw TemplateSyntaxError("unbalanced brackets")
     }
-    
+  }
+  
+  private init(components: [String], tokenParser: TokenParser) throws {
     var parsedComponents = [String]()
-
-    func parseSubExpression(from index: Int, components: [String], tokenParser: TokenParser) throws -> (IfExpressionParser, [String]) {
-      var bracketsBalance = 1
-      let subComponents = Array(components
-        .suffix(from: index)
-        .prefix(while: {
-          if $0 == "(" { bracketsBalance += 1 }
-          else if $0 == ")" { bracketsBalance -= 1 }
-          return bracketsBalance != 0
-        }))
-      
-      let expression = try IfExpressionParser(components: subComponents, tokenParser: tokenParser)
-      return (expression, ["("] + subComponents + [")"])
-    }
-    
     self.tokens = try components.enumerated().flatMap { index, component in
       if component == "(" {
-        let (expression, parsed) = try parseSubExpression(
+        let (expression, parsed) = try IfExpressionParser.subExpression(
           from: index + 1,
           components: components,
           tokenParser: tokenParser
@@ -164,6 +160,21 @@ final class IfExpressionParser {
     }
   }
 
+  static func subExpression(from index: Int, components: [String], tokenParser: TokenParser) throws -> (Expression, [String]) {
+    var bracketsBalance = 1
+    let subComponents = Array(components
+      .suffix(from: index)
+      .prefix(while: {
+        if $0 == "(" { bracketsBalance += 1 }
+        else if $0 == ")" { bracketsBalance -= 1 }
+        return bracketsBalance != 0
+      }))
+    
+    let expressionParser = try IfExpressionParser(components: subComponents, tokenParser: tokenParser)
+    let expression = try expressionParser.parse()
+    return (expression, ["("] + subComponents + [")"])
+  }
+  
   var currentToken: IfToken {
     if tokens.count > position {
       return tokens[position]
@@ -203,12 +214,10 @@ final class IfExpressionParser {
   }
 }
 
-
 func parseExpression(components: [String], tokenParser: TokenParser) throws -> Expression {
-  let parser = try IfExpressionParser(components: components, tokenParser: tokenParser)
+  let parser = try IfExpressionParser.parser(components: components, tokenParser: tokenParser)
   return try parser.parse()
 }
-
 
 /// Represents an if condition and the associated nodes when the condition
 /// evaluates
