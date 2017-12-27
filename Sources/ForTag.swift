@@ -115,6 +115,7 @@ class ForNode : NodeType {
           "last": index == (count - 1),
           "counter": index + 1,
           "counter0": index,
+          "length": count
         ]
 
         return try context.push(dictionary: ["forloop": forContext]) {

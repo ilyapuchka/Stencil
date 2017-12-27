@@ -5,6 +5,7 @@
 ### Enhancements
 
 - Added support for resolving superclass properties for not-NSObject subclasses
+- Added property `forloop.length` to get number of items in the loop
 
 ### Bug Fixes
 
