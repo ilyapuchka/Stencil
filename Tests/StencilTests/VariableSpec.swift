@@ -39,7 +39,8 @@ func testVariable() {
       "counter": [
         "count": "kylef",
         ],
-      "article": Article(author: Person(name: "Kyle"))
+      "article": Article(author: Person(name: "Kyle")),
+      "tuple": (one: 1, two: 2)
     ])
 
 #if os(OSX)
@@ -151,6 +152,18 @@ func testVariable() {
       let variable = Variable("blog.url")
       let result = try variable.resolve(context) as? String
       try expect(result) == "blog.com"
+    }
+
+    $0.it("can subscript tuple by index") {
+      let variable = Variable("tuple.0")
+      let result = try variable.resolve(context) as? Int
+      try expect(result) == 1
+    }
+
+    $0.it("can subscript tuple by label") {
+      let variable = Variable("tuple.two")
+      let result = try variable.resolve(context) as? Int
+      try expect(result) == 2
     }
 
   }

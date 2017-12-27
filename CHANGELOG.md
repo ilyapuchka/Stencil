@@ -10,6 +10,7 @@
 
 - Fixed rendering `{{ block.super }}` with several levels of inheritance
 - Fixed checking dictionary values for nil in `default` filter
+- Fixed subscription tuples by value index, i.e. `{{ tuple.0 }}`
 
 
 ## 0.10.1
