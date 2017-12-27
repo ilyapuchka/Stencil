@@ -5,6 +5,8 @@
 ### Enhancements
 
 - Added support for resolving superclass properties for not-NSObject subclasses
+- Now you can use variables to subscript other values, i.e. `{{ dict.key }}` will first lookup "key" in dictionary,
+  but if there is no value for such key it will try to resolve `key` variable and subscript dictionary with its value  
 
 ### Bug Fixes
 
