@@ -5,6 +5,7 @@
 ### Enhancements
 
 - Added support for resolving superclass properties for not-NSObject subclasses
+- Added method to add boolean filters with their negative counterparts prefixed with `!`
 
 ### Bug Fixes
 
