@@ -43,6 +43,7 @@ indirect enum IfToken {
   case prefix(name: String, bindingPower: Int, op: PrefixOperator.Type)
   case variable(Resolvable)
   case subExpression(Expression)
+  case `static`(Bool)
   case end
 
   var bindingPower: Int {
@@ -51,7 +52,7 @@ indirect enum IfToken {
       return bindingPower
     case .prefix(_, let bindingPower, _):
       return bindingPower
-    case .variable(_):
+    case .variable(_), .static(_):
       return 0
     case .subExpression(_):
       return 0
@@ -71,6 +72,8 @@ indirect enum IfToken {
       return VariableExpression(variable: variable)
     case .subExpression(let expression):
       return expression
+    case .static(let value):
+      return StaticExpression(value: value)
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -87,6 +90,8 @@ indirect enum IfToken {
       throw TemplateSyntaxError("'if' expression error: variable '\(variable)' was called with a left hand side")
     case .subExpression(_):
       throw TemplateSyntaxError("'if' expression error: sub expression was called with a left hand side")
+    case .static:
+      throw TemplateSyntaxError("'if' expression error: static expression was called with a left hand side")
     case .end:
       throw TemplateSyntaxError("'if' expression error: end")
     }
@@ -153,7 +158,11 @@ final class IfExpressionParser {
             return .prefix(name: name, bindingPower: bindingPower, op: cls)
           }
         }
-        return .variable(try tokenParser.compileFilter(component))
+        if let bool = Bool(component) {
+            return .static(bool)
+        } else {
+            return .variable(try tokenParser.compileFilter(component))
+        }
       } else {
         return nil
       }

@@ -4,9 +4,11 @@
 
 ### Enhancements
 
-- Added support for resolving superclass properties for not-NSObject subclasses
+- It is now possible to resolve superclass properties for not-NSObject subclasses
 - Added method to add boolean filters with their negative counterparts prefixed with `!`
 - You can now use brackets in boolean expressions to change operators precedence
+- Boolean expressions can be now rendered, i.e. `{{ this == that }}` will render `true` if variables are equal 
+- It's now possible to use boolean literals in boolean expressions, i.e. `{% if true %}`
 
 ### Bug Fixes
 
