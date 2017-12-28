@@ -9,6 +9,7 @@
 - You can now use brackets in boolean expressions to change operators precedence
 - Boolean expressions can be now rendered, i.e. `{{ this == that }}` will render `true` if variables are equal 
 - It's now possible to use boolean literals in boolean expressions, i.e. `{% if true %}`
+- You can now iterate objects and values of structs and tuples over their stored properties by their names and values  
 
 ### Bug Fixes
 
