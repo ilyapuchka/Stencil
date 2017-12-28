@@ -11,6 +11,7 @@
 - It's now possible to use boolean literals in boolean expressions, i.e. `{% if true %}`
 - You can now iterate objects and values of structs and tuples over their stored properties by their names and values  
 - Added property `forloop.length` to get number of items in the loop
+- Now you can iterate arrays using their indexes and values, not just values 
 
 ### Bug Fixes
 
