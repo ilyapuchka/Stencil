@@ -19,6 +19,7 @@
 - Fixed checking dictionary values for nil in `default` filter
 - Fixed comparing string variables with string literals, in Swift 4 string literals became `Substring` and thus couldn't be directly compared to strings.
 - Fixed using spaces between loop variables
+- Fixed subscripting tuples by value index, i.e. `{{ tuple.0 }}`
 
 
 ## 0.10.1
