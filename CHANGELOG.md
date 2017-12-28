@@ -10,6 +10,7 @@
 - Boolean expressions can be now rendered, i.e. `{{ this == that }}` will render `true` if variables are equal 
 - It's now possible to use boolean literals in boolean expressions, i.e. `{% if true %}`
 - You can now iterate objects and values of structs and tuples over their stored properties by their names and values  
+- Added property `forloop.length` to get number of items in the loop
 
 ### Bug Fixes
 
